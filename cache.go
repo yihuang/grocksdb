@@ -20,6 +20,18 @@ func NewLRUCacheWithOptions(opt *LRUCacheOptions) *Cache {
 	return newNativeCache(cCache)
 }
 
+// NewClockCache creates a new HyperClockCache object
+func NewClockCache(capacity uint64, estimated_entry_charge uint64) *Cache {
+	cCache := C.rocksdb_cache_create_clock(C.size_t(capacity), C.size_t(estimated_entry_charge))
+	return newNativeCache(cCache)
+}
+
+// NewClockCacheWithOptions creates a new HyperClockCache object from options
+func NewClockCacheWithOptions(opts *ClockCacheOptions) *Cache {
+	cCache := C.rocksdb_cache_create_clock_opts(opts.c)
+	return newNativeCache(cCache)
+}
+
 // NewNativeCache creates a Cache object.
 func newNativeCache(c *C.rocksdb_cache_t) *Cache {
 	return &Cache{c: c}
@@ -89,4 +101,40 @@ func (l *LRUCacheOptions) SetNumShardBits(n int) {
 // SetMemoryAllocator for this lru cache.
 func (l *LRUCacheOptions) SetMemoryAllocator(m *MemoryAllocator) {
 	C.rocksdb_lru_cache_options_set_memory_allocator(l.c, m.c)
+}
+
+// ClockCacheOptions are options for Clock Cache.
+type ClockCacheOptions struct {
+	c *C.rocksdb_clock_cache_options_t
+}
+
+// NewClockCacheOptions creates lru cache options.
+func NewClockCacheOptions() *ClockCacheOptions {
+	return &ClockCacheOptions{c: C.rocksdb_clock_cache_options_create()}
+}
+
+// Destroy clock cache options.
+func (l *ClockCacheOptions) Destroy() {
+	C.rocksdb_clock_cache_options_destroy(l.c)
+	l.c = nil
+}
+
+// SetCapacity sets capacity for this clock cache.
+func (l *ClockCacheOptions) SetCapacity(s uint) {
+	C.rocksdb_clock_cache_options_set_capacity(l.c, C.size_t(s))
+}
+
+// SetCapacity sets number of shards used for this clock cache.
+func (l *ClockCacheOptions) SetNumShardBits(n int) {
+	C.rocksdb_clock_cache_options_set_num_shard_bits(l.c, C.int(n))
+}
+
+// SetMemoryAllocator for this clock cache.
+func (l *ClockCacheOptions) SetMemoryAllocator(m *MemoryAllocator) {
+	C.rocksdb_clock_cache_options_set_memory_allocator(l.c, m.c)
+}
+
+// SetEstimatedEntryCharge sets capacity for this clock cache.
+func (l *ClockCacheOptions) SetEstimatedEntryCharge(s uint) {
+	C.rocksdb_clock_cache_options_set_estimated_entry_charge(l.c, C.size_t(s))
 }
